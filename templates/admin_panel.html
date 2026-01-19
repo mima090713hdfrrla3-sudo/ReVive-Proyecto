@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel de Administración - ReVive</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    .table-editable input {
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .small-input { width: 70px !important; }
+    .btn-save { background: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+    .btn-save:hover { background: #218838; }
+    .inline-actions { display: flex; gap: 5px; align-items: center; justify-content: center; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, msg in messages %}
+          <div class="flash {{ category|default('info') }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <header class="site-header">
+    <nav>
+      <a href="{{ url_for('interfaz') }}">Inicio</a> |
+      <a href="{{ url_for('vender') }}">Vender</a> |
+      <a href="{{ url_for('canje') }}">Canjear</a> |
+      <a href="{{ url_for('ubicaciones') }}">Equivalencias</a>
+      {% if session.get('admin_logged_in') %} | <a href="{{ url_for('admin_panel') }}" class="active">Admin</a>{% endif %}
+      {% if session.get('username') %} | <a href="{{ url_for('logout') }}">Cerrar sesión</a>{% endif %}
+    </nav>
+  </header>
+
+  <main style="max-width: 1100px; margin: 0 auto; padding: 20px;">
+    
+    <h1>Panel de Control del Administrador</h1>
+
+    <section class="card">
+      <h2>♻️ Gestión de Materiales (Equivalencias)</h2>
+      
+      <form action="{{ url_for('add_material') }}" method="post" class="inline-form" style="margin-bottom:16px; background:#f0fdf4; padding:15px; border-radius:8px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <input name="name" placeholder="Nuevo Material" required style="flex: 2; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+        <input name="points" placeholder="Puntos/Kg" type="number" min="0" required style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+        <input name="requirements" placeholder="Requisitos (ej: Limpio y seco)" style="flex: 2; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+        <button type="submit" class="btn primary">+ Agregar</button>
+      </form>
+
+      <table class="table table-editable">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Pts/Kg</th>
+            <th>Requisitos</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in materials %}
+          <tr>
+            <form action="{{ url_for('update_material', id=m.id) }}" method="post">
+              <td><input type="text" name="name" value="{{ m.name }}" required></td>
+              <td><input type="number" name="points" value="{{ m.points_per_kg }}" class="small-input" required></td>
+              <td><input type="text" name="requirements" value="{{ m.requirements }}"></td>
+              <td class="inline-actions">
+                <button type="submit" class="btn-save" title="Guardar">💾</button>
+            </form>
+                <form action="{{ url_for('delete_material', id=m.id) }}" method="post" onsubmit="return confirm('¿Eliminar {{ m.name }}?');" style="margin:0;">
+                  <button type="submit" class="btn danger small">🗑️</button>
+                </form>
+              </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 class="text-success">🎁 Gestión de Premios (Tienda)</h2>
+      
+      <form action="{{ url_for('add_product') }}" method="post" class="inline-form" style="margin-bottom:16px; background:#f9f9f9; padding:15px; border-radius:8px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <input name="name" placeholder="Nombre del Premio" required style="flex: 2; padding: 8px;">
+        <input name="points_cost" type="number" placeholder="Costo" required style="flex: 1; padding: 8px;">
+        <input name="stock" type="number" placeholder="Stock" required style="flex: 1; padding: 8px;">
+        <input name="image" placeholder="Imagen (ruta)" value="default.png" style="flex: 1; padding: 8px;">
+        <button type="submit" class="btn primary">Nuevo Premio</button>
+      </form>
+
+      <table class="table table-editable">
+        <thead>
+          <tr class="text-success">
+            <th>Imagen</th>
+            <th>Nombre</th>
+            <th>Costo</th>
+            <th>Stock</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <form method="POST" action="{{ url_for('update_product', id=product.id) }}">
+              <td><input type="text" name="image" value="{{ product.image }}"></td>
+              <td><input type="text" name="name" value="{{ product.name }}" required></td>
+              <td><input type="number" name="points_cost" value="{{ product.points_cost }}" required></td>
+              <td><input type="number" name="stock" value="{{ product.stock }}" required></td>
+              <td class="inline-actions">
+                <button type="submit" class="btn-save">💾</button>
+            </form>
+                <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" style="margin:0;">
+                  <button type="submit" class="btn danger small" onclick="return confirm('¿Eliminar premio?')">🗑️</button>
+                </form>
+              </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    
+    <section class="card" style="border-top: 4px solid #27ae60;">
+      <h2>📜 Historial de Entregas (Reciclaje)</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Material</th>
+            <th>Peso</th>
+            <th>Puntos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in sales_history %}
+          <tr>
+            <td><small>{{ sale['date'] }}</small></td>
+            <td><strong>{{ sale['username'] }}</strong></td>
+            <td>{{ sale['material_name'] }}</td>
+            <td>{{ sale['weight'] }} kg</td>
+            <td style="color: #27ae60; font-weight: bold;">+{{ sale['points_earned'] }} pts</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center; color:#999;">Aún no hay registros de ventas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>👥 Gestión de Usuarios</h2>
+      <input type="text" id="userSearch" onkeyup="filterUsers()" placeholder="Buscar usuario o email..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;">
+
+      <table class="table" id="usersTable">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Puntos</th>
+            <th>Nueva Clave</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr class="user-row">
+            <form method="POST" action="{{ url_for('update_user', id=user.id) }}">
+              <td><input type="text" name="username" value="{{ user.username }}" required></td>
+              <td><input type="email" name="email" value="{{ user.email }}" required></td>
+              <td><input type="number" name="points" value="{{ user.points }}" class="small-input" required></td>
+              <td><input type="password" name="password" placeholder="Clave nueva"></td>
+              <td class="inline-actions">
+                <button type="submit" class="btn-save">💾</button>
+            </form>
+                <form method="POST" action="{{ url_for('delete_user', id=user.id) }}" onsubmit="return confirm('¿Eliminar usuario?');" style="margin:0;">
+                  <button type="submit" class="btn danger small">🗑️</button>
+                </form>
+              </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+   <div class="card-box">
+    <h3>📋 Auditoría de Canjes (Tienda)</h3>
+    <table class="tabla-moderna">
+        <thead>
+            <tr>
+                <th class="col-fecha">Fecha</th>
+                <th>Usuario</th>
+                <th>Producto</th>
+                <th>Puntos</th>
+                <th>Estado</th>
+                <th>Acciones</th> </tr>
+        </thead>
+        <tbody>
+            {% for c in canjes %}
+            <tr>
+                <td class="col-fecha">{{ c.date[:16] }}</td>
+                <td><strong>{{ c.username }}</strong></td>
+                <td>{{ c.product_name }}</td>
+                <td>{{ c.points_spent }}</td>
+                <td><span class="status-badge {{ c.status }}">{{ c.status }}</span></td>
+                <td>
+                    <form action="{{ url_for('delete_redemption', id=c.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-delete" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                            🗑️ Borrar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+  </main>
+
+  <footer style="text-align:center; padding:30px; color:#888; font-size:0.9rem;">
+    ReVIve Sistema de Gestión &copy; 2026
+  </footer>
+
+  <script>
+    function filterUsers() {
+      let filter = document.getElementById('userSearch').value.toLowerCase();
+      document.querySelectorAll('.user-row').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+      });
+    }
+  </script>
+
+</body>
+</html>

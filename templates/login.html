@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ReVive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
+</head>
+<body>
+    <div class="contenedor" style="margin-top: 50px;">
+        <div class="card-box" style="max-width: 400px; margin: 0 auto;">
+            
+            <img src="{{ url_for('static', filename='revive.png') }}" alt="ReVive Logo" class="login-logo">
+
+            {% if error %}
+                <p style="color:red; background: #fee; padding: 10px; border-radius: 5px;">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; box-sizing: border-box;">
+                
+                <br><br>
+
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required style="width: 100%; padding: 10px; box-sizing: border-box;">
+                
+                <br><br>
+
+                <button type="submit" class="btn" style="width: 100%;">Entrar</button>
+            </form>
+
+            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                <p>¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate aquí</a></p>
+                <p>¿Eres administrador? <a href="{{ url_for('admin_login') }}" style="color: #27ae60;">Accede aquí</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

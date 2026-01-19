@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - ReVive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Estilos adicionales para mensajes flash */
+        .flash-messages {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .flash {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .producto-stock {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .producto-stock.agotado {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .puntos-display {
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .puntos-display h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        .puntos-display .cantidad {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Catálogo ReVive ♻️</h1>
+    </header>
+
+    <div class="nav-container">
+     <select id="menu" class="menu-estilo">
+    <option value="" disabled selected>🔽 Menú Principal</option>
+    <option value="cuenta">👤 Mi Perfil y Puntos</option>
+    <option value="vender">♻️ Vender / Entregar Material</option> 
+    <option value="recompensas">🎁 Catálogo de Premios</option>
+    <option value="mis_canjes">📦 Mis Canjes</option>
+    <option value="ubicaciones">📍 Puntos de Reciclaje</option>
+    <option value="logout">🚪 Cerrar Sesión</option>
+</select>
+    </div>
+
+    <div class="contenedor">
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Display de puntos actuales -->
+        <div class="puntos-display" style="max-width: 800px; margin: 20px auto;">
+            <h3>Tus Puntos Disponibles</h3>
+            <div class="cantidad">{{ user['points'] }} 🌟</div>
+        </div>
+
+        <h2>Canjea tus Puntos</h2>
+        
+        <div class="grid-productos">
+            {% for producto in products %}
+            <div class="producto-card">
+                <img src="{{ url_for('static', filename=producto['image']) }}" alt="{{ producto['name'] }}">
+                <h3>{{ producto['name'] }}</h3>
+                <p>{{ producto['points_cost'] }} Puntos</p>
+                
+                {% if producto['stock'] > 0 %}
+                    <p class="producto-stock">Stock: {{ producto['stock'] }} disponibles</p>
+                {% else %}
+                    <p class="producto-stock agotado">¡Agotado!</p>
+                {% endif %}
+                
+                 <form action="{{ url_for('canjear_producto', product_id=producto['id']) }}" method="POST" class="form-canje" data-nombre="{{ producto['name'] }}" data-costo="{{ producto['points_cost'] }}" data-puntos="{{ user['points'] }}">
+    {% if producto['stock'] > 0 and user['points'] >= producto['points_cost'] %}
+        <button type="submit" class="btn">Canjear</button>
+    {% elif producto['stock'] <= 0 %}
+        <button type="button" class="btn" disabled>Agotado</button>
+    {% else %}
+        <button type="button" class="btn" disabled>Puntos insuficientes</button>
+    {% endif %}
+</form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+   // Navegación del menú 
+document.getElementById('menu').addEventListener('change', function() {
+    const val = this.value;
+    if (val === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
+    
+    // ✅ ESTA ES LA LÍNEA QUE DEBES AGREGAR
+    if (val === 'vender') window.location.href = "{{ url_for('vender') }}";
+    
+    if (val === 'recompensas') window.location.href = "{{ url_for('interfaz') }}";
+    if (val === 'mis_canjes') window.location.href = "{{ url_for('mis_canjes') }}";
+    if (val === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
+    if (val === 'logout') window.location.href = "{{ url_for('logout') }}";
+});
+
+        // Confirmación de canje usando event delegation
+        document.addEventListener('submit', function(e) {
+            if (e.target.classList.contains('form-canje')) {
+                const nombre = e.target.dataset.nombre;
+                const costo = parseInt(e.target.dataset.costo);
+                const puntosActuales = parseInt(e.target.dataset.puntos);
+                
+                const mensaje = `¿Estás seguro de canjear "${nombre}" por ${costo} puntos?\n\nPuntos actuales: ${puntosActuales}\nPuntos después del canje: ${puntosActuales - costo}`;
+                
+                if (!confirm(mensaje)) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Auto-ocultar mensajes flash después de 5 segundos
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash');
+            flashMessages.forEach(function(msg) {
+                msg.style.transition = 'opacity 0.5s';
+                msg.style.opacity = '0';
+                setTimeout(function() {
+                    msg.remove();
+                }, 500);
+            });
+        }, 5000);
+    </script>
+
+</body>
+</html>

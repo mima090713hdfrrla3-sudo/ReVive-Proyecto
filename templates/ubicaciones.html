@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubicaciones - ReVive</title>
+    <link rel="stylesheet" href="static/styles.css">
+
+</head>
+<body>
+
+    <header>
+        <h1>Puntos de Reciclaje 📍</h1>
+    </header>
+
+    <div class="nav-container">
+        <select id="menu" class="menu-estilo">
+            <option value="" disabled selected>🔽 Menú Principal</option>
+            <option value="inicio">🏠 Inicio / Tienda</option>
+            <option value="cuenta">👤 Mi Cuenta</option>
+            <option value="ubicaciones">📍 Puntos de Reciclaje</option>
+            <option value="logout">🚪 Cerrar Sesión</option>
+        </select>
+    </div>
+
+    <div class="contenedor">
+        
+        <div class="card-box" style="max-width: 800px; margin: 0 auto 30px auto;">
+            <h2>Centro de Acopio Principal 🏫</h2>
+            <p>
+                ¡Te esperamos en el <strong>CECyTEM Chimalhuacán 1</strong>! Aquí puedes entregar tus residuos clasificados y empezar a acumular puntos.
+            </p>
+            <div style="margin: 20px 0;">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3763.556223456789!2d-98.960682!3d19.388345!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDIzJzE4LjAiTiA5OMKwNTcnMzguNSJX!5e0!3m2!1ses-419!2smx!4v1600000000000!5m2!1ses-419!2smx" 
+                    height="400" 
+                    loading="lazy">
+                </iframe>
+            </div>
+            <p style="color: #666;">
+                📍 <small>Av. Gregorio Melero S/N, Santa María Nativitas, 56330 Chimalhuacán, Méx.</small>
+            </p>
+        </div>
+
+       <div class="equivalencias-container">
+    <h2 style="text-align: center; color: #27ae60;">♻️ Tabla de Equivalencias</h2>
+    <p style="text-align: center;">Los puntos se calculan por <strong>kilogramo</strong>.</p>
+
+    <table class="table-equivalencias">
+        <thead>
+            <tr style="background-color: #27ae60; color: white;">
+                <th>Material</th>
+                <th>Puntos por Kg</th>
+                <th>Requisitos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in materials %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td><strong>{{ m.points_per_kg }} Puntos</strong></td>
+                <td>{{ m.requirements if m.requirements else 'Limpio y seco' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center;">No hay materiales registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    
+
+    <script>
+        document.getElementById('menu').addEventListener('change', function() {
+            const destino = this.value;
+            if (destino === 'inicio') window.location.href = "{{ url_for('interfaz') }}";
+            if (destino === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
+            if (destino === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
+            if (destino === 'logout') window.location.href = "{{ url_for('logout') }}";
+        });
+    </script>
+
+</body>
+</html>

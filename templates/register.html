@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - ReVive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .login-logo { max-width: 140px; display: block; margin: 0 auto 20px auto; }
+        .card-box { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #27ae60; text-align: center; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+        .form-control { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-green { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-green:hover { background: #219150; }
+        .footer-links { text-align: center; margin-top: 20px; font-size: 14px; color: #666; }
+        
+        /* Estilo para los mensajes de error */
+        .error-msg {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-box">
+        <img src="{{ url_for('static', filename='revive.png') }}" alt="ReVive Logo" class="login-logo">
+        
+        <h2>Crear Cuenta 🌱</h2>
+
+        {% if error %}
+            <div class="error-msg">
+                ⚠️ {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('registro') }}"> 
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" name="username" class="form-control" required>
+
+            <label for="email">Correo Electrónico:</label>
+            <input type="email" id="email" name="email" class="form-control" required placeholder="ejemplo@gmail.com">
+
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" class="form-control" required>
+
+            <button type="submit" class="btn-green">Registrarse</button>
+        </form>
+
+        <div class="footer-links">
+            ¿Ya tienes cuenta? <a href="{{ url_for('login') }}" style="color: #27ae60; text-decoration: none; font-weight: bold;">Inicia sesión aquí</a>
+        </div>
+    </div>
+</body>
+</html> 

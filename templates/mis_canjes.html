@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Canjes - ReVive</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <style>
+        .canje-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .canje-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .canje-info {
+            flex: 1;
+        }
+        .canje-info h3 {
+            margin: 0 0 10px 0;
+            color: var(--verde-oscuro);
+        }
+        .canje-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .canje-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .status-completado {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pendiente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .puntos-badge {
+            background: var(--verde-principal);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .no-canjes {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .no-canjes-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mis Canjes 📦</h1>
+    </header>
+
+    <div class="nav-container">
+        <select id="menu" class="menu-estilo">
+            <option value="" disabled selected>🔽 Menú Principal</option>
+            <option value="cuenta">👤 Mi Perfil y Puntos</option>
+            <option value="recompensas">🎁 Catálogo de Premios</option>
+            <option value="mis_canjes">📦 Mis Canjes</option>
+            <option value="ubicaciones">📍 Puntos de Reciclaje</option>
+            <option value="logout">🚪 Cerrar Sesión</option>
+        </select>
+    </div>
+
+    <div class="contenedor">
+        <div class="card-box" style="max-width: 800px; margin: 0 auto 30px;">
+            <h2>Historial de Canjes</h2>
+            <p>Aquí puedes ver todos tus canjes realizados</p>
+        </div>
+
+        {% if canjes %}
+            <div style="max-width: 800px; margin: 0 auto;">
+                {% for canje in canjes %}
+                <div class="canje-item">-
+                    <img src="{{ url_for('static', filename=canje['image']) }}" alt="{{ canje['product_name'] }}">
+                    
+                    <div class="canje-info">
+                        <h3>{{ canje['product_name'] }}</h3>
+                        <p><strong>Fecha:</strong> {{ canje['date'][:16] }}</p>
+                        <p><strong>Puntos gastados:</strong> <span class="puntos-badge">{{ canje['points_spent'] }} puntos</span></p>
+                        <span class="canje-status status-{{ canje['status'] }}">
+                            {{ canje['status'].capitalize() }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-canjes">
+                <div class="no-canjes-icon">📭</div>
+                <h3>No has realizado ningún canje todavía</h3>
+                <p>¡Acumula puntos reciclando y canjea productos increíbles!</p>
+                <a href="{{ url_for('interfaz') }}" class="btn" style="display: inline-block; margin-top: 20px;">Ver Catálogo</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('menu').addEventListener('change', function() {
+            const val = this.value;
+            if (val === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
+            if (val === 'recompensas') window.location.href = "{{ url_for('interfaz') }}";
+            if (val === 'mis_canjes') window.location.href = "{{ url_for('mis_canjes') }}";
+            if (val === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
+            if (val === 'logout') window.location.href = "{{ url_for('logout') }}";
+        });
+    </script>
+
+</body>
+</html>

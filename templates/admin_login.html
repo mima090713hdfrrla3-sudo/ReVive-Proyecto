@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ReVive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .login-logo { max-width: 150px; display: block; margin: 0 auto 20px auto; }
+        .card-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; border-top: 5px solid #27ae60; }
+        h2 { color: #333; text-align: center; margin-bottom: 25px; font-size: 1.5em; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .form-control { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-admin { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.3s; }
+        .btn-admin:hover { background: #1a252f; }
+        .back-link { text-align: center; margin-top: 20px; display: block; color: #27ae60; text-decoration: none; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="card-box">
+        <img src="{{ url_for('static', filename='revive.png') }}" alt="ReVive Logo" class="login-logo">
+        
+        <h2>Acceso Administrativo 🔒</h2>
+
+        {% if error %}
+            <p style="color:red; background: #fee; padding: 10px; border-radius: 5px; text-align: center;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <label for="username">Usuario Admin:</label>
+            <input type="text" id="username" name="username" class="form-control" required>
+
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" class="form-control" required>
+
+            <button type="submit" class="btn-admin">Ingresar al Panel</button>
+        </form>
+
+        <a href="{{ url_for('login') }}" class="back-link">← Volver al login de usuarios</a>
+    </div>
+</body>
+</html>

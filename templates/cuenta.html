@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil 👤</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .mini-canje {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mini-canje-info {
+            flex: 1;
+        }
+        .mini-canje-points {
+            background: var(--verde-principal);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mi Perfil 👤</h1>
+    </header>
+
+    <div class="nav-container">
+        <select id="menu" class="menu-estilo">
+            <option value="" disabled selected>🔽 Menú Principal</option>
+            <option value="inicio">🏠 Inicio / Tienda</option>
+            <option value="cuenta">👤 Mi Cuenta</option>
+            <option value="mis_canjes">📦 Mis Canjes</option>
+            <option value="ubicaciones">📍 Puntos de Reciclaje</option>
+            <option value="logout">🚪 Cerrar Sesión</option>
+        </select>
+    </div>
+
+    <div class="contenedor">
+        
+        <!-- Tarjeta de Puntos -->
+        <div class="card-box">
+            <div class="puntos-banner">
+                {{ user_points }} Puntos ReVive
+            </div>
+
+            <h2>Hola, {{ user_name }}</h2>
+            
+            <p><strong>Correo:</strong> {{ user_email }}</p>
+
+            <!-- Botón para simular ganancia de puntos (para pruebas) -->
+            <form action="{{ url_for('ganar_puntos') }}" method="POST">
+                <button type="submit" class="btn">♻️ Simular Reciclaje (+10)</button>
+            </form>
+        </div>
+
+        <!-- Historial Reciente de Canjes -->
+        {% if canjes %}
+        <div class="card-box" style="margin-top: 20px;">
+            <h3>Canjes Recientes</h3>
+            <p style="color: #666; font-size: 0.9rem;">Últimos 10 canjes realizados</p>
+            
+            {% for canje in canjes %}
+            <div class="mini-canje">
+                <div class="mini-canje-info">
+                    <strong>{{ canje['product_name'] }}</strong>
+                    <br>
+                    <small style="color: #666;">{{ canje['date'][:16] }}</small>
+                </div>
+                <span class="mini-canje-points">-{{ canje['points_spent'] }} pts</span>
+            </div>
+            {% endfor %}
+
+            <a href="{{ url_for('mis_canjes') }}" class="btn" style="margin-top: 15px; display: inline-block;">
+                Ver Historial Completo
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        document.getElementById('menu').addEventListener('change', function() {
+            const destino = this.value;
+            if (destino === 'inicio') window.location.href = "{{ url_for('interfaz') }}";
+            if (destino === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
+            if (destino === 'mis_canjes') window.location.href = "{{ url_for('mis_canjes') }}";
+            if (destino === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
+            if (destino === 'logout') window.location.href = "{{ url_for('logout') }}";
+        });
+    </script>
+
+</body>
+</html>

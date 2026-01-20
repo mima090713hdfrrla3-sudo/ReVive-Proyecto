@@ -317,9 +317,7 @@ def vender():
             if material and weight > 0:
                 points_earned = int(material['points_per_kg'] * weight)
                 
-                # --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-                # En lugar de hacer el UPDATE a la base de datos, 
-                # lo guardamos en la lista de solicitudes pendientes.
+                # Guardamos en la lista global para que el admin lo vea
                 nueva_solicitud = {
                     "id": len(solicitudes_pendientes) + 1,
                     "user_id": session['user_id'],
@@ -329,18 +327,14 @@ def vender():
                     "peso": weight
                 }
                 solicitudes_pendientes.append(nueva_solicitud)
-                # ---------------------------------
                 
-                flash(f'Solicitud enviada. El administrador validará tus {weight}kg de {material["name"]}.', 'info')
-                return redirect(url_for('perfil')) # Cámbialo por 'cuenta' si esa es tu ruta
+                flash(f'Solicitud enviada. Espera a que el admin valide tus {weight}kg.', 'info')
+                return redirect(url_for('admin_panel')) # O a tu perfil
             
-            else:
-                flash('El peso debe ser mayor a 0.', 'error')
-                
-        except (ValueError, TypeError):
-            flash('Por favor, ingresa un peso válido.', 'error')
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'error')
 
-    # Para mostrar la página con los materiales
+    # Para cargar la página vender.html
     conn = get_db_connection()
     materials = conn.execute('SELECT * FROM materials').fetchall()
     conn.close()

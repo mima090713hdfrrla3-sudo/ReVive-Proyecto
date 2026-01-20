@@ -6,6 +6,15 @@
     <title>Catálogo - ReVive</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
+        /* Estilos para imágenes de productos */
+        .producto-img {
+            width: 100%;
+            height: 200px; /* Altura fija para que todas las cartas se vean iguales */
+            object-fit: cover; /* Ajusta la imagen sin deformarla */
+            border-radius: 10px 10px 0 0;
+            display: block;
+        }
+
         /* Estilos adicionales para mensajes flash */
         .flash-messages {
             max-width: 800px;
@@ -67,19 +76,18 @@
     </header>
 
     <div class="nav-container">
-     <select id="menu" class="menu-estilo">
-    <option value="" disabled selected>🔽 Menú Principal</option>
-    <option value="cuenta">👤 Mi Perfil y Puntos</option>
-    <option value="vender">♻️ Vender / Entregar Material</option> 
-    <option value="recompensas">🎁 Catálogo de Premios</option>
-    <option value="mis_canjes">📦 Mis Canjes</option>
-    <option value="ubicaciones">📍 Puntos de Reciclaje</option>
-    <option value="logout">🚪 Cerrar Sesión</option>
-</select>
+        <select id="menu" class="menu-estilo">
+            <option value="" disabled selected>🔽 Menú Principal</option>
+            <option value="cuenta">👤 Mi Perfil y Puntos</option>
+            <option value="vender">♻️ Vender / Entregar Material</option> 
+            <option value="recompensas">🎁 Catálogo de Premios</option>
+            <option value="mis_canjes">📦 Mis Canjes</option>
+            <option value="ubicaciones">📍 Puntos de Reciclaje</option>
+            <option value="logout">🚪 Cerrar Sesión</option>
+        </select>
     </div>
 
     <div class="contenedor">
-        <!-- Mensajes Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
@@ -90,7 +98,6 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Display de puntos actuales -->
         <div class="puntos-display" style="max-width: 800px; margin: 20px auto;">
             <h3>Tus Puntos Disponibles</h3>
             <div class="cantidad">{{ user['points'] }} 🌟</div>
@@ -101,7 +108,11 @@
         <div class="grid-productos">
             {% for producto in products %}
             <div class="producto-card">
-                <img src="{{ url_for('static', filename=producto['image']) }}" alt="{{ producto['name'] }}">
+                <img src="{{ url_for('static', filename='img/' + producto['name']|lower + '.png') }}" 
+                     alt="{{ producto['name'] }}" 
+                     class="producto-img"
+                     onerror="this.src='{{ url_for('static', filename='img/default.png') }}'">
+                
                 <h3>{{ producto['name'] }}</h3>
                 <p>{{ producto['points_cost'] }} Puntos</p>
                 
@@ -111,36 +122,33 @@
                     <p class="producto-stock agotado">¡Agotado!</p>
                 {% endif %}
                 
-                 <form action="{{ url_for('canjear_producto', product_id=producto['id']) }}" method="POST" class="form-canje" data-nombre="{{ producto['name'] }}" data-costo="{{ producto['points_cost'] }}" data-puntos="{{ user['points'] }}">
-    {% if producto['stock'] > 0 and user['points'] >= producto['points_cost'] %}
-        <button type="submit" class="btn">Canjear</button>
-    {% elif producto['stock'] <= 0 %}
-        <button type="button" class="btn" disabled>Agotado</button>
-    {% else %}
-        <button type="button" class="btn" disabled>Puntos insuficientes</button>
-    {% endif %}
-</form>
+                <form action="{{ url_for('canjear_producto', product_id=producto['id']) }}" method="POST" class="form-canje" data-nombre="{{ producto['name'] }}" data-costo="{{ producto['points_cost'] }}" data-puntos="{{ user['points'] }}">
+                    {% if producto['stock'] > 0 and user['points'] >= producto['points_cost'] %}
+                        <button type="submit" class="btn">Canjear</button>
+                    {% elif producto['stock'] <= 0 %}
+                        <button type="button" class="btn" disabled>Agotado</button>
+                    {% else %}
+                        <button type="button" class="btn" disabled>Puntos insuficientes</button>
+                    {% endif %}
+                </form>
             </div>
             {% endfor %}
         </div>
     </div>
 
     <script>
-   // Navegación del menú 
-document.getElementById('menu').addEventListener('change', function() {
-    const val = this.value;
-    if (val === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
-    
-    // ✅ ESTA ES LA LÍNEA QUE DEBES AGREGAR
-    if (val === 'vender') window.location.href = "{{ url_for('vender') }}";
-    
-    if (val === 'recompensas') window.location.href = "{{ url_for('interfaz') }}";
-    if (val === 'mis_canjes') window.location.href = "{{ url_for('mis_canjes') }}";
-    if (val === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
-    if (val === 'logout') window.location.href = "{{ url_for('logout') }}";
-});
+        // Navegación del menú 
+        document.getElementById('menu').addEventListener('change', function() {
+            const val = this.value;
+            if (val === 'cuenta') window.location.href = "{{ url_for('cuenta') }}";
+            if (val === 'vender') window.location.href = "{{ url_for('vender') }}";
+            if (val === 'recompensas') window.location.href = "{{ url_for('interfaz') }}";
+            if (val === 'mis_canjes') window.location.href = "{{ url_for('mis_canjes') }}";
+            if (val === 'ubicaciones') window.location.href = "{{ url_for('ubicaciones') }}";
+            if (val === 'logout') window.location.href = "{{ url_for('logout') }}";
+        });
 
-        // Confirmación de canje usando event delegation
+        // Confirmación de canje
         document.addEventListener('submit', function(e) {
             if (e.target.classList.contains('form-canje')) {
                 const nombre = e.target.dataset.nombre;
@@ -155,7 +163,7 @@ document.getElementById('menu').addEventListener('change', function() {
             }
         });
 
-        // Auto-ocultar mensajes flash después de 5 segundos
+        // Auto-ocultar mensajes flash
         setTimeout(function() {
             const flashMessages = document.querySelectorAll('.flash');
             flashMessages.forEach(function(msg) {
@@ -167,6 +175,5 @@ document.getElementById('menu').addEventListener('change', function() {
             });
         }, 5000);
     </script>
-
 </body>
 </html>

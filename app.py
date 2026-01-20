@@ -303,7 +303,7 @@ def logout():
 
 @app.route('/vender', methods=['GET', 'POST'])
 def vender():
-    global solicitudes_pendientes  # <--- AÑADE ESTA LÍNEA AQUÍ
+    global solicitudes_pendientes  
     if 'user_id' not in session:
         return redirect(url_for('login'))
     if 'user_id' not in session:

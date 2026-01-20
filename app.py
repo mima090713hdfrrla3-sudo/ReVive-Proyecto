@@ -5,9 +5,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta"
 # Lista temporal para guardar las entregas pendientes de validar
 solicitudes_pendientes = []
+app.secret_key = "clave_secreta"
+
 # --- CONEXIÓN BASE DE DATOS ---
 def get_db_connection():
     conn = sqlite3.connect("revive.db")
@@ -305,19 +306,17 @@ def vender():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
+    conn = get_db_connection()
     if request.method == 'POST':
         try:
             material_id = request.form.get('material_id')
             weight = float(request.form.get('weight'))
-            
-            conn = get_db_connection()
             material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
-            conn.close()
-
+            
             if material and weight > 0:
                 points_earned = int(material['points_per_kg'] * weight)
                 
-                # Guardamos en la lista global para que el admin lo vea
+                # Guardamos en la lista global (asegúrate que solicitudes_pendientes esté al inicio del app.py)
                 nueva_solicitud = {
                     "id": len(solicitudes_pendientes) + 1,
                     "user_id": session['user_id'],
@@ -328,18 +327,19 @@ def vender():
                 }
                 solicitudes_pendientes.append(nueva_solicitud)
                 
-                flash(f'Solicitud enviada. Espera a que el admin valide tus {weight}kg.', 'info')
-                return redirect(url_for('admin_panel')) # O a tu perfil
+                conn.close()
+                flash(f'Solicitud enviada. El admin validará tus {weight}kg.', 'info')
+                return redirect(url_for('admin_panel'))
             
         except Exception as e:
-            flash(f'Error: {str(e)}', 'error')
+            print(f"Error en vender: {e}") # Esto saldrá en los logs de Render
+            flash('Error al procesar la venta.', 'error')
+        finally:
+            conn.close()
 
-    # Para cargar la página vender.html
-    conn = get_db_connection()
     materials = conn.execute('SELECT * FROM materials').fetchall()
     conn.close()
     return render_template('vender.html', materials=materials)
-
 @app.route('/canje')
 def canje():
     return redirect(url_for('interfaz'))

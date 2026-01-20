@@ -108,11 +108,10 @@
         <div class="grid-productos">
             {% for producto in products %}
             <div class="producto-card">
-                <img src="{{ url_for('static', filename='img/' + producto['name']|lower + '.png') }}" 
-                     alt="{{ producto['name'] }}" 
-                     class="producto-img"
-                     onerror="this.src='{{ url_for('static', filename='img/default.png') }}'">
-                
+               <img src="{{ url_for('static', filename=producto['name']|lower|replace(' ', '_') + '.png') }}" 
+                alt="{{ producto['name'] }}" 
+                class="producto-img"
+                onerror="this.src='{{ url_for('static', filename='revive.png') }}'">
                 <h3>{{ producto['name'] }}</h3>
                 <p>{{ producto['points_cost'] }} Puntos</p>
                 

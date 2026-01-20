@@ -141,7 +141,7 @@ def enviar_material():
     cantidad = request.form.get('cantidad')
     puntos_estimados = int(cantidad) * 10 
 
-    # Guardamos la solicitud con el ID del usuario actual
+    # Agregamos a la lista de pendientes (NO sumamos puntos todavía)
     nueva_solicitud = {
         "id": len(solicitudes_pendientes) + 1,
         "user_id": session['user_id'],
@@ -151,32 +151,32 @@ def enviar_material():
     }
     solicitudes_pendientes.append(nueva_solicitud)
     
-    flash("Solicitud enviada. El admin la validará pronto.", "info")
+    flash("Solicitud enviada. El administrador debe validarla.", "info")
     return redirect(url_for('perfil'))
-
+# --- RUTA PARA EL ADMIN (ACEPTAR/NEGAR) ---
 @app.route('/validar_entrega/<int:id_solicitud>/<accion>', methods=['POST'])
 def validar_entrega(id_solicitud, accion):
     global solicitudes_pendientes
     
-    # Buscamos la solicitud en la lista
+    # Buscamos la solicitud en la lista temporal
     solicitud = next((s for s in solicitudes_pendientes if s['id'] == id_solicitud), None)
     
-    if solicitud and accion == 'aceptar':
-        # Conectamos a tu base de datos revive.db para sumar puntos
-        conn = get_db_connection()
-        conn.execute("UPDATE users SET points = points + ? WHERE id = ?", 
-                     (solicitud['puntos'], solicitud['user_id']))
-        conn.commit()
-        conn.close()
-        flash(f"¡Puntos entregados a {solicitud['username']}!", "success")
-    
-    elif accion == 'negar':
-        flash("Solicitud rechazada.", "danger")
+    if solicitud:
+        if accion == 'aceptar':
+            # AQUÍ es donde se dan los puntos de verdad en la base de datos
+            conn = get_db_connection()
+            conn.execute("UPDATE users SET points = points + ? WHERE id = ?", 
+                         (solicitud['puntos'], solicitud['user_id']))
+            conn.commit()
+            conn.close()
+            flash(f"Entrega aprobada. Se otorgaron {solicitud['puntos']} puntos.", "success")
+        else:
+            flash("Entrega rechazada. No se otorgaron puntos.", "danger")
 
-    # Quitamos la solicitud de la lista de pendientes
-    solicitudes_pendientes = [s for s in solicitudes_pendientes if s['id'] != id_solicitud]
+        # Quitamos la solicitud de la lista para que desaparezca de la tabla
+        solicitudes_pendientes = [s for s in solicitudes_pendientes if s['id'] != id_solicitud]
     
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_panel'))l
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -305,47 +305,42 @@ def vender():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    conn = get_db_connection()
-    
     if request.method == 'POST':
         try:
             material_id = request.form.get('material_id')
             weight = float(request.form.get('weight'))
             
+            conn = get_db_connection()
             material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
-            
+            conn.close()
+
             if material and weight > 0:
                 points_earned = int(material['points_per_kg'] * weight)
                 
-                # 1. Actualizar puntos
-                conn.execute('UPDATE users SET points = points + ? WHERE id = ?', (points_earned, session['user_id']))
+                # --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+                # En lugar de hacer el UPDATE a la base de datos, 
+                # lo guardamos en la lista de solicitudes pendientes.
+                nueva_solicitud = {
+                    "id": len(solicitudes_pendientes) + 1,
+                    "user_id": session['user_id'],
+                    "username": session.get('username'),
+                    "material": material['name'],
+                    "puntos": points_earned,
+                    "peso": weight
+                }
+                solicitudes_pendientes.append(nueva_solicitud)
+                # ---------------------------------
                 
-                # 2. Guardar en historial
-                conn.execute('''
-                    INSERT INTO sales (user_id, material_name, weight, points_earned) 
-                    VALUES (?, ?, ?, ?)
-                ''', (session['user_id'], material['name'], weight, points_earned))
-                
-                conn.commit()
-                conn.close()
-                
-                flash(f'¡Éxito! Entregaste {weight}kg de {material["name"]} y ganaste {points_earned} pts.', 'success')
-                return redirect(url_for('cuenta'))
+                flash(f'Solicitud enviada. El administrador validará tus {weight}kg de {material["name"]}.', 'info')
+                return redirect(url_for('perfil')) # Cámbialo por 'cuenta' si esa es tu ruta
             
             else:
                 flash('El peso debe ser mayor a 0.', 'error')
                 
         except (ValueError, TypeError):
-            flash('Por favor, ingresa un peso válido (solo números).', 'error')
-        
-        finally:
-            # Cerramos la conexión si algo falla dentro del try
-            try:
-                conn.close()
-            except:
-                pass
+            flash('Por favor, ingresa un peso válido.', 'error')
 
-    # Para el método GET (mostrar la página)
+    # Para mostrar la página con los materiales
     conn = get_db_connection()
     materials = conn.execute('SELECT * FROM materials').fetchall()
     conn.close()
@@ -466,7 +461,7 @@ def admin_panel():
     products = conn.execute('SELECT * FROM products').fetchall()
     materials = conn.execute('SELECT * FROM materials').fetchall()
     
-    # Ventas de materiales (lo que ya tenías)
+    # Ventas de materiales
     sales_history = conn.execute('''
         SELECT s.*, u.username 
         FROM sales s 
@@ -474,7 +469,7 @@ def admin_panel():
         ORDER BY s.date DESC
     ''').fetchall()
 
-    # ✅ NUEVO: Obtener canjes de productos para la tabla Auditoría
+    # Canjes de productos
     canjes = conn.execute('''
         SELECT r.*, u.username, p.name as product_name
         FROM redemptions r 
@@ -485,13 +480,14 @@ def admin_panel():
     
     conn.close()
     
-    # Agregamos 'canjes' al return
+    # ✅ AGREGAMOS solicitudes=solicitudes_pendientes aquí:
     return render_template('admin_panel.html', 
                            users=users, 
                            products=products, 
                            materials=materials, 
                            sales_history=sales_history,
-                           canjes=canjes) # <-- No olvides esto
+                           canjes=canjes,
+                           solicitudes=solicitudes_pendientes) # <--- ¡ESTO ES LO QUE FALTA!
 
 # --- Gestión de Materiales ---
 

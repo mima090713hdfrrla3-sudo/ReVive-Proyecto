@@ -581,3 +581,23 @@ footer {
 .tabla-moderna th, .tabla-moderna td {
     padding: 10px 5px;
 }
+.btn-validar {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    transition: 0.3s;
+}
+
+.btn-aceptar {
+    background-color: #28a745; /* Verde */
+}
+
+.btn-negar {
+    background-color: #dc3545; /* Rojo */
+}
+
+.btn-aceptar:hover { background-color: #218838; }
+.btn-negar:hover { background-color: #c82333; }

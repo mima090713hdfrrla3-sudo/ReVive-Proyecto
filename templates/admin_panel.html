@@ -222,7 +222,40 @@
         </tbody>
     </table>
 </div>
-  </main>
+<section class="admin-seccion">
+    <h2>Solicitudes de Reciclaje Pendientes ⏳</h2>
+    <div class="tabla-contenedor">
+        <table class="tabla-admin">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Material</th>
+                    <th>Puntos Estimados</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td><strong>{{ solicitud.username }}</strong></td>
+                    <td>{{ solicitud.material }}</td>
+                    <td>{{ solicitud.puntos }} 🌟</td>
+                    <td class="acciones-celda">
+                        <form action="{{ url_for('procesar_solicitud', id=solicitud.id, decision='aceptar') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-validar btn-aceptar">Aceptar</button>
+                        </form>
+                        
+                        <form action="{{ url_for('procesar_solicitud', id=solicitud.id, decision='negar') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-validar btn-negar">Negar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+</main>
 
   <footer style="text-align:center; padding:30px; color:#888; font-size:0.9rem;">
     ReVIve Sistema de Gestión &copy; 2026

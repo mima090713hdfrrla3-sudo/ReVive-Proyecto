@@ -6,7 +6,8 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
-
+# Lista temporal para guardar las entregas pendientes de validar
+solicitudes_pendientes = []
 # --- CONEXIÓN BASE DE DATOS ---
 def get_db_connection():
     conn = sqlite3.connect("revive.db")
@@ -130,7 +131,52 @@ def admin_required(func):
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+# --- RUTA PARA QUE EL USUARIO ENVÍE MATERIAL ---
+@app.route('/enviar_material', methods=['POST'])
+def enviar_material():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    material = request.form.get('material')
+    cantidad = request.form.get('cantidad')
+    puntos_estimados = int(cantidad) * 10 
 
+    # Guardamos la solicitud con el ID del usuario actual
+    nueva_solicitud = {
+        "id": len(solicitudes_pendientes) + 1,
+        "user_id": session['user_id'],
+        "username": session.get('username', 'Usuario'),
+        "material": material,
+        "puntos": puntos_estimados
+    }
+    solicitudes_pendientes.append(nueva_solicitud)
+    
+    flash("Solicitud enviada. El admin la validará pronto.", "info")
+    return redirect(url_for('perfil'))
+
+@app.route('/validar_entrega/<int:id_solicitud>/<accion>', methods=['POST'])
+def validar_entrega(id_solicitud, accion):
+    global solicitudes_pendientes
+    
+    # Buscamos la solicitud en la lista
+    solicitud = next((s for s in solicitudes_pendientes if s['id'] == id_solicitud), None)
+    
+    if solicitud and accion == 'aceptar':
+        # Conectamos a tu base de datos revive.db para sumar puntos
+        conn = get_db_connection()
+        conn.execute("UPDATE users SET points = points + ? WHERE id = ?", 
+                     (solicitud['puntos'], solicitud['user_id']))
+        conn.commit()
+        conn.close()
+        flash(f"¡Puntos entregados a {solicitud['username']}!", "success")
+    
+    elif accion == 'negar':
+        flash("Solicitud rechazada.", "danger")
+
+    # Quitamos la solicitud de la lista de pendientes
+    solicitudes_pendientes = [s for s in solicitudes_pendientes if s['id'] != id_solicitud]
+    
+    return redirect(url_for('admin_panel'))
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

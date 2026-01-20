@@ -177,7 +177,7 @@ def validar_entrega(id_solicitud, accion):
         # Quitamos la solicitud de la lista para que desaparezca de la tabla
         solicitudes_pendientes = [s for s in solicitudes_pendientes if s['id'] != id_solicitud]
     
-    return redirect(url_for('admin_panel'))l
+    return redirect(url_for('admin_panel'))
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -303,6 +303,9 @@ def logout():
 
 @app.route('/vender', methods=['GET', 'POST'])
 def vender():
+    global solicitudes_pendientes  # <--- AÑADE ESTA LÍNEA AQUÍ
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     if 'user_id' not in session:
         return redirect(url_for('login'))
 

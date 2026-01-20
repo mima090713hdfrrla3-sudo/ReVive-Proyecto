@@ -105,7 +105,7 @@
 
         <h2>Canjea tus Puntos</h2>
         
-        <div class="grid-productos">
+        <div class="grid-productos">  
             {% for producto in products %}
             <div class="producto-card">
              <img src="{{ url_for('static', filename=producto['name']|lower|replace('á','a')|replace('é','e')|replace('í','i')|replace('ó','o')|replace('ú','u')|replace(' ', '_') + '.png') }}" 

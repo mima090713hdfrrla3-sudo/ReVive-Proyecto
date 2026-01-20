@@ -159,22 +159,27 @@ def enviar_material():
 def validar_entrega(id_solicitud, accion):
     global solicitudes_pendientes
     
-    # Buscamos la solicitud en la lista temporal
+    # Buscamos la solicitud en la lista
     solicitud = next((s for s in solicitudes_pendientes if s['id'] == id_solicitud), None)
     
     if solicitud:
         if accion == 'aceptar':
-            # AQUÍ es donde se dan los puntos de verdad en la base de datos
+            # AQUÍ se suman los puntos de verdad en la base de datos
             conn = get_db_connection()
             conn.execute("UPDATE users SET points = points + ? WHERE id = ?", 
                          (solicitud['puntos'], solicitud['user_id']))
+            # También guardamos en el historial de ventas oficial
+            conn.execute('''
+                INSERT INTO sales (user_id, material_name, weight, points_earned) 
+                VALUES (?, ?, ?, ?)
+            ''', (solicitud['user_id'], solicitud['material'], solicitud['peso'], solicitud['puntos']))
             conn.commit()
             conn.close()
-            flash(f"Entrega aprobada. Se otorgaron {solicitud['puntos']} puntos.", "success")
+            flash(f"¡Entrega de {solicitud['username']} aprobada! Puntos sumados.", "success")
         else:
-            flash("Entrega rechazada. No se otorgaron puntos.", "danger")
+            flash(f"Solicitud de {solicitud['username']} rechazada.", "danger")
 
-        # Quitamos la solicitud de la lista para que desaparezca de la tabla
+        # Quitamos la solicitud de la lista de pendientes (sea aceptada o negada)
         solicitudes_pendientes = [s for s in solicitudes_pendientes if s['id'] != id_solicitud]
     
     return redirect(url_for('admin_panel'))
@@ -303,23 +308,23 @@ def logout():
 
 @app.route('/vender', methods=['GET', 'POST'])
 def vender():
-    global solicitudes_pendientes  
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    global solicitudes_pendientes
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    conn = get_db_connection()
     if request.method == 'POST':
         try:
             material_id = request.form.get('material_id')
             weight = float(request.form.get('weight'))
-            material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
             
+            conn = get_db_connection()
+            material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
+            conn.close()
+
             if material and weight > 0:
                 points_earned = int(material['points_per_kg'] * weight)
                 
-                # Guardamos en la lista global (asegúrate que solicitudes_pendientes esté al inicio del app.py)
+                # Guardamos la solicitud en la lista global para el admin
                 nueva_solicitud = {
                     "id": len(solicitudes_pendientes) + 1,
                     "user_id": session['user_id'],
@@ -330,16 +335,13 @@ def vender():
                 }
                 solicitudes_pendientes.append(nueva_solicitud)
                 
-                conn.close()
-                flash(f'Solicitud enviada. El admin validará tus {weight}kg.', 'info')
-                return redirect(url_for('admin_panel'))
+                flash(f'Solicitud enviada. El admin validará tus {weight}kg de {material["name"]}.', 'info')
+                return redirect(url_for('interfaz')) # O la ruta de tu perfil
             
         except Exception as e:
-            print(f"Error en vender: {e}") # Esto saldrá en los logs de Render
-            flash('Error al procesar la venta.', 'error')
-        finally:
-            conn.close()
+            flash(f'Error al procesar: {str(e)}', 'error')
 
+    conn = get_db_connection()
     materials = conn.execute('SELECT * FROM materials').fetchall()
     conn.close()
     return render_template('vender.html', materials=materials)

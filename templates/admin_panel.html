@@ -222,14 +222,15 @@
         </tbody>
     </table>
 </div>
-<section class="admin-seccion">
+<section class="admin-seccion card">
     <h2>Solicitudes de Reciclaje Pendientes ⏳</h2>
     <div class="tabla-contenedor">
-        <table class="tabla-admin">
+        <table class="table">
             <thead>
                 <tr>
                     <th>Usuario</th>
                     <th>Material</th>
+                    <th>Peso</th>
                     <th>Puntos Estimados</th>
                     <th>Acciones</th>
                 </tr>
@@ -239,17 +240,20 @@
                 <tr>
                     <td><strong>{{ solicitud.username }}</strong></td>
                     <td>{{ solicitud.material }}</td>
-                    <td>{{ solicitud.puntos }} 🌟</td>
-                    <td class="acciones-celda">
-                        <form action="{{ url_for('procesar_solicitud', id=solicitud.id, decision='aceptar') }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn-validar btn-aceptar">Aceptar</button>
+                    <td>{{ solicitud.peso }} kg</td>
+                    <td style="color: #27ae60; font-weight: bold;">{{ solicitud.puntos }} 🌟</td>
+                    <td class="inline-actions">
+                        <form action="{{ url_for('validar_entrega', id_solicitud=solicitud.id, accion='aceptar') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-save" style="background:#2ecc71; padding: 10px;" title="Aceptar">✅ Aceptar</button>
                         </form>
                         
-                        <form action="{{ url_for('procesar_solicitud', id=solicitud.id, decision='negar') }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn-validar btn-negar">Negar</button>
+                        <form action="{{ url_for('validar_entrega', id_solicitud=solicitud.id, accion='negar') }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn danger small" style="padding: 10px;" title="Rechazar">❌</button>
                         </form>
                     </td>
                 </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center; color:#999;">No hay solicitudes pendientes de validación.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
